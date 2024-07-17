@@ -4,8 +4,16 @@ const inputTodo = document.querySelector('#inputTodo');
 const inputCalender = document.querySelector('#inputCalender');
 const wrap = document.getElementById('wrap');
 
+let isDone = false;
+let isEdit = false;
+
 form.addEventListener('submit', (ev) => {
   ev.preventDefault();
+
+  if (isEdit) {
+    alert('Cannot submit while in edit mode.');
+    return;
+  }
   validationTodo();
 });
 
@@ -23,7 +31,7 @@ const validationTodo = () => {
 const validateDay = () => {
   let resultDay = '';
   const datasDay = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
-  const day = inputDay.value.toLowerCase();
+  const day = inputDay.value.toLowerCase().trim('');
 
   if (datasDay.includes(day)) {
     resultDay = inputDay.value;
@@ -36,32 +44,33 @@ const validateDay = () => {
 
 const validateCalender = () => {
   let resultCalender = '';
-  const setTimingYear = '2024';
-  const calender = inputCalender.value;
-  let year = '';
 
-  for (let i = 0; i < 4; i++) {
-    year += calender[i];
-  }
+  const getMonthValue = inputCalender.value.substring(5, 7);
+  const getFulYearValue = inputCalender.value.substring(0, 4);
+  const getDateValue = inputCalender.value.substring(8, 10);
 
-  if (year < setTimingYear) {
+  const timing = new Date();
+
+  const fullYear = timing.getFullYear();
+  const month = timing.getMonth() + 1;
+  const date = timing.getDate();
+
+  if ((getMonthValue <= month && getDateValue < date) || getFulYearValue < fullYear) {
     alert('Error: Your date has expired');
-    inputCalender.focus();
   } else {
-    resultCalender = calender;
+    resultCalender += inputCalender.value;
   }
+
   return resultCalender;
 };
 
-let isDone = false;
-let card = '';
 const setUITodo = () => {
-  card += `
+  card = `
             <div class="px-5 mt-10 ">
                 <div class="relative border p-4 flex  items-center justify-between rounded-md">
                     <div>
-                        <span class="text-sm text-indigo-800 font-medium" id="date">${inputDay.value} , ${inputCalender.value}</span>
-                        <h1 class="text-lg font-medium text-gray-900" id="todo">${inputTodo.value}</h1>
+                        <span class="text-sm text-indigo-800 font-medium" id="date" placeholder="Day to do Activities">${inputDay.value}  ${inputCalender.value}</span>
+                        <h1 class="text-lg font-medium text-gray-900" id="todo" placeholder="Tasks you want to do">${inputTodo.value}</h1>
                     </div>
                     <div class="*:cursor-pointer *:duration-300 *:text-xl *:md:text-2xl">
                     <i class='bx bxs-paint  hover:text-indigo-700 active:scale-105' onclick="todoDone(event)"></i>
@@ -75,36 +84,55 @@ const setUITodo = () => {
             </div>
     `;
 
-  wrap.innerHTML = card;
+  wrap.innerHTML += card;
 };
 
 const removeTodo = (ev) => {
-  console.log(ev.target);
-  console.log('Remove');
+  const card = ev.target.closest('.relative');
+  card.remove();
 };
 
 const editTodo = (ev) => {
-  inputDay.focus();
-  inputDay.value = 'Senin';
-  inputTodo.value = 'Pergi Ke Sekolah dan Main Musik';
+  const target = ev.target;
+  const parentCard = target.closest('.relative');
+
+  const date = parentCard.querySelector('#date');
+  const todo = parentCard.querySelector('#todo');
+  isEdit = !isEdit;
+  if (isEdit) {
+    inputDay.value = date.innerHTML;
+    inputTodo.value = todo.innerHTML;
+    target.className = 'bx bx-save hover:text-green-700 active:scale-105';
+    inputDay.focus();
+  } else {
+    if (validateCalender()) {
+      date.innerText = validateCalender();
+      target.className = 'bx bx-edit hover:text-green-700 active:scale-105';
+    } else {
+      inputDay.value = '';
+      inputTodo.value = '';
+      inputCalender.value = '';
+    }
+  }
 };
 
 const todoDone = (ev) => {
-  isDone = true;
+  isDone = !isDone;
   const parentCard = ev.target.closest('.relative');
 
   const date = parentCard.querySelector('#date');
   const todo = parentCard.querySelector('#todo');
   const work = parentCard.querySelector('#work');
 
-  date.style.textDecoration = 'line-through';
-  todo.style.textDecoration = 'line-through';
-
-  !isDone ? (work.innerHTML = 'Not Done') : (work.innerHTML = 'Done');
+  if (!isDone) {
+    work.innerHTML = 'Not Done';
+    date.style.textDecoration = 'none';
+    todo.style.textDecoration = 'none';
+  } else {
+    work.innerHTML = 'Done';
+    date.style.textDecoration = 'line-through';
+    todo.style.textDecoration = 'line-through';
+  }
 };
 
-// Masalah
-
-// 1 Ketika sudah di tekan button isDone , dan ketika perbaruan data maka yang sudah di klick done tersebut akan hilang
-
-// 2 Fitur Edit Todo Belum Jadi
+0
