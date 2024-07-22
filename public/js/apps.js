@@ -6,6 +6,7 @@ const wrap = document.getElementById('wrap');
 
 const STORAGE_TODO = 'storage_todo';
 let modeEdit = false;
+let isDone = false;
 let idTodo = 0;
 
 const getMaxIdFromStorage = () => {
@@ -38,13 +39,16 @@ const validationForm = () => {
     modeEdit = false;
   } else {
     if (validateDay() && validateTodo() && validateCalender()) {
-      idTodo += 1;
-      setUITodo(idTodo, inputDay.value, inputTodo.value, inputCalender.value, false);
-      setStorageUITodo(idTodo, inputDay.value, inputTodo.value, inputCalender.value, false);
-      inputDay.value = '';
-      inputTodo.value = '';
-      inputCalender.value = '';
-      inputDay.focus();
+      setAlertSuccess();
+      setTimeout(() => {
+        idTodo += 1;
+        setUITodo(idTodo, inputDay.value, inputTodo.value, inputCalender.value, isDone);
+        setStorageUITodo(idTodo, inputDay.value, inputTodo.value, inputCalender.value, isDone);
+        inputDay.value = '';
+        inputTodo.value = '';
+        inputCalender.value = '';
+        inputDay.focus();
+      }, 1700);
     }
     return false;
   }
@@ -134,17 +138,19 @@ const todoDone = (ev) => {
   const todo = parentCard.querySelector('#todo');
   const work = parentCard.querySelector('#work');
   const todoId = parseInt(parentCard.dataset.id);
-  const isDone = work.textContent === 'Not Done';
 
-  if (isDone) {
+  if (work.innerHTML.trim() == 'Not Done') {
+    isDone = true;
     work.innerHTML = 'Done';
     date.style.textDecoration = 'line-through';
     todo.style.textDecoration = 'line-through';
   } else {
+    isDone = false;
     work.innerHTML = 'Not Done';
     date.style.textDecoration = 'none';
     todo.style.textDecoration = 'none';
   }
+
   syncStorageDone(todoId, isDone);
 };
 
@@ -159,20 +165,37 @@ const editTodo = (ev) => {
   parentCard.dataset.isEdit = !isEdit;
 
   if (!isEdit) {
-    inputDay.value = date.innerHTML;
-    inputTodo.value = todo.innerHTML;
-    target.className = 'bx bx-save hover:text-green-700 active:scale-105';
-    inputDay.focus();
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be Edit your Todo!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, Edit it!',
+    }).then((_) => {
+      inputDay.value = date.innerHTML;
+      inputTodo.value = todo.innerHTML;
+      target.className = 'bx bx-save hover:text-green-700 active:scale-105';
+      inputDay.focus();
+    });
   } else {
     if (validateDay() && validateTodo() && validateCalender()) {
-      target.className = 'bx bx-edit hover:text-green-700 active:scale-105';
-      date.innerHTML = `${inputDay.value} ${inputCalender.value}`;
-      todo.innerHTML = inputTodo.value;
-      updateStorageTodo(parseInt(parentCard.dataset.id), inputDay.value, inputTodo.value, inputCalender.value);
+      Swal.fire({
+        icon: 'success',
+        title: 'Has been edited successfully',
+        timer: 1000,
+      });
+      setTimeout(() => {
+        target.className = 'bx bx-edit hover:text-green-700 active:scale-105';
+        date.innerHTML = `${inputDay.value} ${inputCalender.value}`;
+        todo.innerHTML = inputTodo.value;
+        updateStorageTodo(parseInt(parentCard.dataset.id), inputDay.value, inputTodo.value, inputCalender.value);
 
-      inputDay.value = '';
-      inputTodo.value = '';
-      inputCalender.value = '';
+        inputDay.value = '';
+        inputTodo.value = '';
+        inputCalender.value = '';
+      }, 1500);
     } else {
       parentCard.dataset.isEdit = true;
     }
@@ -183,11 +206,28 @@ const removeTodo = (ev) => {
   const parentCard = ev.target.closest('.card');
   const cardId = parseInt(parentCard.dataset.id);
 
-  parentCard.remove();
-  syncStorageRemoveTodo(cardId);
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, Remove it!',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        title: 'Deleted!',
+        text: 'Your Todo has been deleted.',
+        icon: 'success',
+      });
+      parentCard.remove();
+      syncStorageRemoveTodo(cardId);
+    }
+  });
 };
 
-const setStorageUITodo = (id, day, todo, calender, isDone) => {
+const setStorageUITodo = (id, day, todo, calender) => {
   const getItemsStorage = localStorage.getItem(STORAGE_TODO);
   const itemsTodo = JSON.parse(getItemsStorage) || [];
 
@@ -226,6 +266,16 @@ const syncStorageRemoveTodo = (id) => {
 
   const updateItem = items.filter((item) => item.id !== id);
   localStorage.setItem(STORAGE_TODO, JSON.stringify(updateItem));
+};
+
+const setAlertSuccess = () => {
+  return Swal.fire({
+    position: 'top center',
+    icon: 'success',
+    title: 'Todo Success Added',
+    showConfirmButton: true,
+    timer: 1500,
+  });
 };
 
 document.addEventListener('DOMContentLoaded', () => {
