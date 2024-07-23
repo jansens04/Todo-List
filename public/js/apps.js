@@ -34,9 +34,9 @@ form.addEventListener('submit', (ev) => {
 });
 
 const validationForm = () => {
+  console.log(modeEdit);
   if (modeEdit) {
     alert('You cannot enter data because it is in Edit Mode.');
-    modeEdit = false;
   } else {
     if (validateDay() && validateTodo() && validateCalender()) {
       setAlertSuccess();
@@ -103,7 +103,7 @@ const setUITodo = (id, day, todo, calender, isDone) => {
   card.className = 'card';
   card.dataset.id = id;
   card.innerHTML = `
-     <div class="px-5 mt-10 ">
+     <div class="px-5 mt-10 " id='content'>
                     <div class="relative border p-4 flex  items-center justify-between rounded-md">
                         <div>
                             <span class="text-sm text-indigo-800 font-medium" id="date" placeholder="Day to do Activities">${day}  ${calender}</span>
@@ -111,7 +111,7 @@ const setUITodo = (id, day, todo, calender, isDone) => {
                         </div>
                         <div class="*:cursor-pointer *:duration-300 *:text-xl *:md:text-2xl">
                         <i class='bx bxs-paint  hover:text-indigo-700 active:scale-105' onclick="todoDone(event)"></i>
-                            <i class='bx bx-edit  hover:text-green-700 active:scale-105' onclick="editTodo(event)"></i>
+                            <i class='bx bx-edit  hover:text-green-700 active:scale-105' onclick="editTodo(event)" id='edit'></i>
                             <i class='bx bx-trash   hover:text-red-700 active:scale-105' onclick="removeTodo(event)"></i>
                         </div>
                         <p
@@ -155,16 +155,13 @@ const todoDone = (ev) => {
 };
 
 const editTodo = (ev) => {
-  modeEdit = !modeEdit;
   const target = ev.target;
   const parentCard = target.closest('.card');
   const date = parentCard.querySelector('#date');
   const todo = parentCard.querySelector('#todo');
-  const isEdit = parentCard.dataset.isEdit == 'true';
 
-  parentCard.dataset.isEdit = !isEdit;
-
-  if (!isEdit) {
+  if (target.id == 'edit') {
+    modeEdit = !modeEdit;
     Swal.fire({
       title: 'Are you sure?',
       text: "You won't be Edit your Todo!",
@@ -173,31 +170,32 @@ const editTodo = (ev) => {
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
       confirmButtonText: 'Yes, Edit it!',
-    }).then((_) => {
-      inputDay.value = date.innerHTML;
-      inputTodo.value = todo.innerHTML;
-      target.className = 'bx bx-save hover:text-green-700 active:scale-105';
-      inputDay.focus();
+    }).then((res) => {
+      if (res.isConfirmed !== false) {
+        inputDay.value = date.innerHTML;
+        inputTodo.value = todo.innerHTML;
+        target.className = 'bx bx-save hover:text-green-700 active:scale-105';
+        target.id = 'save';
+        inputDay.focus();
+      }
     });
   } else {
     if (validateDay() && validateTodo() && validateCalender()) {
       Swal.fire({
         icon: 'success',
         title: 'Has been edited successfully',
-        timer: 1000,
+        timer: 1200,
       });
       setTimeout(() => {
         target.className = 'bx bx-edit hover:text-green-700 active:scale-105';
+        target.id = 'edit';
         date.innerHTML = `${inputDay.value} ${inputCalender.value}`;
         todo.innerHTML = inputTodo.value;
         updateStorageTodo(parseInt(parentCard.dataset.id), inputDay.value, inputTodo.value, inputCalender.value);
-
         inputDay.value = '';
         inputTodo.value = '';
         inputCalender.value = '';
       }, 1500);
-    } else {
-      parentCard.dataset.isEdit = true;
     }
   }
 };
@@ -220,9 +218,12 @@ const removeTodo = (ev) => {
         title: 'Deleted!',
         text: 'Your Todo has been deleted.',
         icon: 'success',
+        timer: 1000,
       });
-      parentCard.remove();
-      syncStorageRemoveTodo(cardId);
+      setTimeout(() => {
+        parentCard.remove();
+        syncStorageRemoveTodo(cardId);
+      }, 1300);
     }
   });
 };
