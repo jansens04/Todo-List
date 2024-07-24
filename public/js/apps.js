@@ -34,7 +34,6 @@ form.addEventListener('submit', (ev) => {
 });
 
 const validationForm = () => {
-  console.log(modeEdit);
   if (modeEdit) {
     alert('You cannot enter data because it is in Edit Mode.');
   } else {
@@ -161,7 +160,6 @@ const editTodo = (ev) => {
   const todo = parentCard.querySelector('#todo');
 
   if (target.id == 'edit') {
-    modeEdit = !modeEdit;
     Swal.fire({
       title: 'Are you sure?',
       text: "You won't be Edit your Todo!",
@@ -172,6 +170,7 @@ const editTodo = (ev) => {
       confirmButtonText: 'Yes, Edit it!',
     }).then((res) => {
       if (res.isConfirmed !== false) {
+        modeEdit = !modeEdit;
         inputDay.value = date.innerHTML;
         inputTodo.value = todo.innerHTML;
         target.className = 'bx bx-save hover:text-green-700 active:scale-105';
